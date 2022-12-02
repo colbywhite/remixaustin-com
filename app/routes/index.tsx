@@ -1,5 +1,9 @@
 import MeetupIcon from "~/components/icons/MeetupIcon";
 import DiscordHeader from "~/images/discord-header.jpg";
+import { getRemixAustinInfo } from "~/models/meetup.server";
+import { json } from "@remix-run/server-runtime";
+import { useLoaderData } from "@remix-run/react";
+import NextEventCard from "~/components/NextEventCard";
 
 interface CardProps {
   altText: string;
@@ -28,8 +32,17 @@ function Card({ altText, cta, ctaLink, heading, imgSrc, text }: CardProps) {
     </div>
   );
 }
+export async function loader() {
+  const group = await getRemixAustinInfo();
+  const nextEvent =
+    group.upcomingEvents.edges.length < 1
+      ? undefined
+      : group.upcomingEvents.edges[0].node;
+  return json({ link: group.link, nextEvent });
+}
 
 export default function Index() {
+  const { link, nextEvent } = useLoaderData<typeof loader>();
   return (
     <>
       <div
@@ -55,15 +68,19 @@ export default function Index() {
               We are the premiere Remix community for developers in Austin, and
               we stream remotely all over the world!
             </p>
-            <a
-              href="https://www.meetup.com/remix-austin/"
-              className="btn-primary btn"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <span className="mr-2">Join us on Meetup</span>
-              <MeetupIcon />
-            </a>
+            {nextEvent ? (
+              <NextEventCard event={nextEvent} />
+            ) : (
+              <a
+                href={link}
+                className="btn-primary btn"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <span className="mr-2">Join us on Meetup</span>
+                <MeetupIcon />
+              </a>
+            )}
           </div>
         </div>
       </div>
